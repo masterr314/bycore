@@ -1,7 +1,11 @@
+import os
+import sys
 import re
 import pickle
 from os.path import exists
 import requests
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Manager(object):
