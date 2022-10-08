@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from .managers import (
     FileManager,
@@ -37,6 +38,8 @@ class Storage(AbstractStorage):
 
         self.__default_storage_file_name = filename
         self.__bypass_server_url = url
+
+        self.__id = None
         self.__data = None
         self.__file_manager = None
         self.__network_manager = None
@@ -46,8 +49,20 @@ class Storage(AbstractStorage):
         self.__nickname = None
 
     @property
+    def id(self):
+        return self.__id
+
+    @property
     def data(self):
         return self.__data
+
+    @property
+    def acc_created_at(self):
+        return self.__acc_created_at
+
+    @property
+    def last_log_in_at(self):
+        return self.__last_log_in_at
 
     @property
     def nickname(self):
@@ -79,6 +94,8 @@ class Storage(AbstractStorage):
         )
         _all = self.__file_manager.load()
         # self.__last_log_in_at = _all.get('LAST_LOG_IN_AT', datetime.now())
+
+        self.__id = _all.get('ID', str(uuid.uuid4()))
         self.__acc_created_at = _all.get('ACC_CREATED_At', datetime.now())
         self.__data = _all.get('DATA', [])
         self.__nickname = _all.get('NICKNAME', '')
@@ -100,6 +117,7 @@ class Storage(AbstractStorage):
 
     def save(self):
         combined = {
+            'ID': self.__id,
             'NICKNAME': self.__nickname,
             'PASS_PHRASE': self.__pass_phrase,
             'ACC_CREATED_At': self.__acc_created_at,
@@ -110,7 +128,7 @@ class Storage(AbstractStorage):
         self.__file_manager.save(combined)
 
     def sync(self):
-        response = self.__network_manager.save()
+        response = self.__network_manager.save(data={'endpoint': f'/sync/{self.__id}'})
         if response and response.status_code == 200:
             for i in self.__data:
                 if not i.is_synced:
@@ -119,3 +137,7 @@ class Storage(AbstractStorage):
             self.save()
 
         return response
+
+    def ping(self):
+        return self.__network_manager.ping(data={'endpoint': f'/ping'})
+

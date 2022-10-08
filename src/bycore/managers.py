@@ -68,7 +68,13 @@ class NetworkManager(Manager):
         :returns: Response object
         :rtype: :class:`Response`
         """
-        if exists(self.__file):
+        endpoint = data.get('endpoint', None)
+        if exists(self.__file) and endpoint:
             files = {'file': open(self.__file, 'rb')}
-            res = requests.post(self.__url, files=files)
+            res = requests.post(self.__url + endpoint, files=files, json=data if data else {})
             return res
+
+    def ping(self, data):
+        endpoint = data.get('endpoint', None)
+        if endpoint:
+            return requests.post(self.__url + endpoint)
